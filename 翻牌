@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦖 恐龍世界記憶翻牌</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Microsoft JhengHei", Arial, sans-serif;
+
+    background: linear-gradient(
+        to bottom,
+        #7dd3fc 0%,
+        #bae6fd 55%,
+        #86efac 55%,
+        #4ade80 100%
+    );
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+}
+
+/* 遊戲 */
+.game {
+    width: 100%;
+    max-width: 600px;
+
+    background: rgba(255,255,255,0.96);
+
+    border-radius: 28px;
+    padding: 25px;
+
+    text-align: center;
+
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+h1 {
+    margin: 0;
+    color: #166534;
+    font-size: 34px;
+}
+
+.subtitle {
+    margin: 6px 0 18px;
+    color: #57534e;
+}
+
+/* 難度 */
+.difficulty {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.level {
+    border: none;
+    padding: 10px 17px;
+
+    border-radius: 20px;
+
+    background: #d1fae5;
+    color: #166534;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.level.active {
+    background: #16a34a;
+    color: white;
+
+    box-shadow: 0 4px 0 #166534;
+}
+
+/* 分數 */
+.info {
+    display: flex;
+    justify-content: space-around;
+
+    background: #f0fdf4;
+
+    border-radius: 15px;
+
+    padding: 12px;
+
+    margin-bottom: 18px;
+
+    color: #166534;
+    font-weight: bold;
+}
+
+/* 棋盤 */
+.board {
+    display: grid;
+    gap: 8px;
+}
+
+/* 卡牌 */
+.card {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+
+    border: 0;
+    border-radius: 14px;
+
+    background: linear-gradient(
+        145deg,
+        #22c55e,
+        #15803d
+    );
+
+    color: white;
+
+    font-size: clamp(22px, 7vw, 45px);
+
+    cursor: pointer;
+
+    box-shadow: 0 5px 0 #166534;
+
+    transition: transform 0.15s;
+}
+
+.card:hover {
+    transform: scale(1.04);
+}
+
+.card:active {
+    transform: scale(0.95);
+}
+
+.card.flipped {
+    background: #d1fae5;
+
+    box-shadow: 0 5px 0 #16a34a;
+}
+
+.card.matched {
+    background: #bbf7d0;
+
+    box-shadow: 0 5px 0 #15803d;
+}
+
+/* 訊息 */
+#message {
+    min-height: 45px;
+
+    margin-top: 15px;
+
+    font-size: 20px;
+    font-weight: bold;
+
+    color: #7c3aed;
+}
+
+/* 按鈕 */
+.restart {
+    border: 0;
+
+    padding: 13px 25px;
+
+    border-radius: 25px;
+
+    background: #f97316;
+    color: white;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow: 0 4px 0 #c2410c;
+}
+
+.restart:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #c2410c;
+}
+
+/* =========================
+   恐龍咬人畫面
+========================= */
+
+.bite-screen {
+    position: fixed;
+    inset: 0;
+
+    z-index: 9999;
+
+    display: none;
+
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(220, 38, 38, 0.92);
+
+    overflow: hidden;
+}
+
+.bite-screen.show {
+    display: flex;
+}
+
+.bite-dinosaur {
+    position: absolute;
+
+    font-size: 45vw;
+
+    animation: bite 0.9s ease-in-out forwards;
+}
+
+.bite-text {
+    position: absolute;
+
+    top: 12%;
+
+    color: white;
+
+    font-size: 38px;
+    font-weight: bold;
+
+    text-align: center;
+
+    text-shadow: 3px 3px #991b1b;
+
+    animation: textPop 0.8s forwards;
+}
+
+@keyframes bite {
+
+    0% {
+        transform:
+            translateX(100vw)
+            scale(0.5);
+    }
+
+    45% {
+        transform:
+            translateX(0)
+            scale(1.2);
+    }
+
+    60% {
+        transform:
+            translateX(-20px)
+            scale(1.35);
+    }
+
+    75% {
+        transform:
+            translateX(20px)
+            scale(1.25);
+    }
+
+    100% {
+        transform:
+            translateX(-120vw)
+            scale(1.5);
+    }
+}
+
+@keyframes textPop {
+
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    40% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+/* 遊戲區震動 */
+.shake {
+    animation: shake 0.45s;
+}
+
+@keyframes shake {
+
+    0%   { transform: translate(0); }
+    20%  { transform: translate(-10px, 5px); }
+    40%  { transform: translate(10px, -5px); }
+    60%  { transform: translate(-7px, -3px); }
+    80%  { transform: translate(7px, 3px); }
+    100% { transform: translate(0); }
+
+}
+
+/* 手機 */
+@media (max-width: 450px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .game {
+        padding: 17px;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    .board {
+        gap: 5px;
+    }
+
+    .card {
+        border-radius: 9px;
+    }
+
+    .level {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+<div class="game">
+
+    <h1>🦖 恐龍世界</h1>
+
+    <div class="subtitle">
+        🧠 記憶翻牌大挑戰
+    </div>
+
+    <!-- 難度 -->
+    <div class="difficulty">
+
+        <button
+            class="level active"
+            data-size="3">
+            🥚 3 × 3
+        </button>
+
+        <button
+            class="level"
+            data-size="4">
+            🦖 4 × 4
+        </button>
+
+        <button
+            class="level"
+            data-size="5">
+            🌋 5 × 5
+        </button>
+
+    </div>
+
+    <!-- 資訊 -->
+    <div class="info">
+
+        <div>
+            ⭐ 分數：
+            <span id="score">0</span>
+        </div>
+
+        <div>
+            ⏱️ 時間：
+            <span id="time">0</span>
+        </div>
+
+    </div>
+
+    <!-- 棋盤 -->
+    <div id="board" class="board"></div>
+
+    <!-- 訊息 -->
+    <div id="message">
+        🦖 找找看一樣的恐龍！
+    </div>
+
+    <!-- 重玩 -->
+    <button id="restart" class="restart">
+        🔄 再玩一次
+    </button>
+
+</div>
+
+
+<!-- 恐龍咬人 -->
+<div id="biteScreen" class="bite-screen">
+
+    <div class="bite-text">
+        😱 糟糕！<br>
+        恐龍生氣了！
+    </div>
+
+    <div class="bite-dinosaur">
+        🦖
+    </div>
+
+</div>
+
+
+<script>
+
+/* =================================
+   遊戲資料
+================================= */
+
+const dinosaurs = [
+    "🦖",
+    "🦕",
+    "🐊",
+    "🦴",
+    "🌋",
+    "🌿",
+    "☄️",
+    "🪨",
+    "🌴",
+    "🥩",
+    "🐲",
+    "🔥",
+    "⭐",
+    "💎",
+    "🍖",
+    "🌱",
+    "🦎"
+];
+
+
+/* =================================
+   遊戲狀態
+================================= */
+
+let size = 3;
+
+let cards = [];
+
+let firstCard = null;
+let secondCard = null;
+
+let locked = false;
+
+let score = 0;
+let time = 0;
+
+let matchedPairs = 0;
+let totalPairs = 0;
+
+let eggFound = false;
+let hasEgg = false;
+
+let timer = null;
+
+
+/* =================================
+   取得元素
+================================= */
+
+const board =
+    document.getElementById("board");
+
+const scoreText =
+    document.getElementById("score");
+
+const timeText =
+    document.getElementById("time");
+
+const message =
+    document.getElementById("message");
+
+const restartButton =
+    document.getElementById("restart");
+
+const biteScreen =
+    document.getElementById("biteScreen");
+
+
+/* =================================
+   難度按鈕
+================================= */
+
+document
+.querySelectorAll(".level")
+.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        size =
+            Number(button.dataset.size);
+
+        document
+        .querySelectorAll(".level")
+        .forEach(b => {
+            b.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        startGame();
+
+    });
+
+});
+
+
+/* =================================
+   重玩
+================================= */
+
+restartButton.addEventListener(
+    "click",
+    startGame
+);
+
+
+/* =================================
+   開始遊戲
+================================= */
+
+function startGame() {
+
+    clearInterval(timer);
+
+    score = 0;
+    time = 0;
+
+    matchedPairs = 0;
+
+    firstCard = null;
+    secondCard = null;
+
+    locked = false;
+
+    eggFound = false;
+
+
+    scoreText.textContent = score;
+
+    timeText.textContent = time;
+
+    message.textContent =
+        "🦖 找找看一樣的恐龍！";
+
+
+    createCards();
+
+    drawBoard();
+
+
+    timer = setInterval(() => {
+
+        time++;
+
+        timeText.textContent = time;
+
+    }, 1000);
+}
+
+
+/* =================================
+   建立牌組
+================================= */
+
+function createCards() {
+
+    const total =
+        size * size;
+
+
+    /*
+     * 奇數：
+     * 3×3 = 9
+     * 5×5 = 25
+     *
+     * 留一張恐龍蛋
+     */
+
+    hasEgg =
+        total % 2 === 1;
+
+
+    /*
+     * 正常配對數
+     */
+
+    totalPairs =
+        Math.floor(total / 2);
+
+
+    cards = [];
+
+
+    /*
+     * 取得恐龍
+     */
+
+    const selected =
+        dinosaurs.slice(
+            0,
+            totalPairs
+        );
+
+
+    /*
+     * 每隻兩張
+     */
+
+    selected.forEach(dino => {
+
+        cards.push(dino);
+        cards.push(dino);
+
+    });
+
+
+    /*
+     * 只有奇數模式才加蛋
+     */
+
+    if (hasEgg) {
+
+        cards.push("🥚");
+
+    }
+
+
+    /*
+     * 洗牌
+     */
+
+    shuffle(cards);
+}
+
+
+/* =================================
+   洗牌
+================================= */
+
+function shuffle(array) {
+
+    for (
+        let i = array.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+        [
+            array[i],
+            array[j]
+        ] =
+        [
+            array[j],
+            array[i]
+        ];
+    }
+}
+
+
+/* =================================
+   畫棋盤
+================================= */
+
+function drawBoard() {
+
+    board.innerHTML = "";
+
+    board.style.gridTemplateColumns =
+        `repeat(${size}, 1fr)`;
+
+
+    cards.forEach((symbol, index) => {
+
+        const button =
+            document.createElement("button");
+
+
+        button.className = "card";
+
+
+        button.dataset.symbol =
+            symbol;
+
+
+        button.dataset.index =
+            index;
+
+
+        button.textContent =
+            "❓";
+
+
+        button.addEventListener(
+            "click",
+            () => flipCard(button)
+        );
+
+
+        board.appendChild(button);
+
+    });
+}
+
+
+/* =================================
+   翻牌
+================================= */
+
+function flipCard(card) {
+
+    /*
+     * 正在處理兩張牌
+     */
+
+    if (locked) {
+        return;
+    }
+
+
+    /*
+     * 已經翻開
+     */
+
+    if (
+        card.classList.contains("flipped")
+    ) {
+        return;
+    }
+
+
+    /*
+     * 已經配對
+     */
+
+    if (
+        card.classList.contains("matched")
+    ) {
+        return;
+    }
+
+
+    /*
+     * 恐龍蛋
+     */
+
+    if (
+        card.dataset.symbol === "🥚"
+    ) {
+
+        findEgg(card);
+
+        return;
+    }
+
+
+    /*
+     * 翻開
+     */
+
+    card.classList.add("flipped");
+
+    card.textContent =
+        card.dataset.symbol;
+
+
+    /*
+     * 第一張
+     */
+
+    if (firstCard === null) {
+
+        firstCard = card;
+
+        message.textContent =
+            "👀 再找一張看看！";
+
+        return;
+    }
+
+
+    /*
+     * 第二張
+     */
+
+    secondCard = card;
+
+
+    checkCards();
+}
+
+
+/* =================================
+   檢查兩張
+================================= */
+
+function checkCards() {
+
+    const a =
+        firstCard.dataset.symbol;
+
+    const b =
+        secondCard.dataset.symbol;
+
+
+    /*
+     * ★ 最重要的判斷
+     *
+     * 完全相同才成功
+     */
+
+    if (a === b) {
+
+        correct();
+
+    } else {
+
+        wrong();
+
+    }
+}
+
+
+/* =================================
+   配對成功
+================================= */
+
+function correct() {
+
+    firstCard.classList.add("matched");
+
+    secondCard.classList.add("matched");
+
+
+    matchedPairs++;
+
+    score += 10;
+
+
+    scoreText.textContent =
+        score;
+
+
+    message.textContent =
+        "🎉 配對成功！ +10";
+
+
+    firstCard = null;
+
+    secondCard = null;
+
+
+    checkWin();
+}
+
+
+/* =================================
+   配對錯誤
+================================= */
+
+function wrong() {
+
+    locked = true;
+
+
+    message.textContent =
+        "😱 翻錯了！";
+
+
+    showBite();
+
+
+    setTimeout(() => {
+
+        firstCard.classList.remove(
+            "flipped"
+        );
+
+        secondCard.classList.remove(
+            "flipped"
+        );
+
+
+        firstCard.textContent =
+            "❓";
+
+        secondCard.textContent =
+            "❓";
+
+
+        firstCard = null;
+
+        secondCard = null;
+
+        locked = false;
+
+
+        message.textContent =
+            "🦖 再試一次！";
+
+
+    }, 1000);
+}
+
+
+/* =================================
+   找到恐龍蛋
+================================= */
+
+function findEgg(card) {
+
+    if (eggFound) {
+        return;
+    }
+
+
+    eggFound = true;
+
+
+    card.classList.add("flipped");
+    card.classList.add("matched");
+
+    card.textContent =
+        "🥚";
+
+
+    score += 5;
+
+    scoreText.textContent =
+        score;
+
+
+    message.textContent =
+        "🥚 發現恐龍蛋！ +5";
+
+
+    checkWin();
+}
+
+
+/* =================================
+   恐龍咬人
+================================= */
+
+function showBite() {
+
+    const game =
+        document.querySelector(".game");
+
+
+    /*
+     * 顯示
+     */
+
+    biteScreen.classList.add("show");
+
+
+    /*
+     * 震動
+     */
+
+    game.classList.add("shake");
+
+
+    /*
+     * 手機支援震動
+     */
+
+    if (
+        navigator.vibrate
+    ) {
+
+        navigator.vibrate([
+            100,
+            60,
+            180
+        ]);
+
+    }
+
+
+    setTimeout(() => {
+
+        biteScreen.classList.remove(
+            "show"
+        );
+
+        game.classList.remove(
+            "shake"
+        );
+
+    }, 900);
+}
+
+
+/* =================================
+   檢查完成
+================================= */
+
+function checkWin() {
+
+    /*
+     * 所有配對完成
+     */
+
+    const pairsDone =
+        matchedPairs === totalPairs;
+
+
+    /*
+     * 如果有蛋，也要找到蛋
+     */
+
+    const eggDone =
+        !hasEgg || eggFound;
+
+
+    if (
+        pairsDone &&
+        eggDone
+    ) {
+
+        gameWin();
+
+    }
+}
+
+
+/* =================================
+   完成
+================================= */
+
+function gameWin() {
+
+    clearInterval(timer);
+
+
+    message.textContent =
+        `🏆 恭喜完成！用了 ${time} 秒！`;
+
+}
+
+
+/* =================================
+   啟動
+================================= */
+
+startGame();
+
+</script>
+
+</body>
+</html>
