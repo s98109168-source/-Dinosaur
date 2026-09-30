@@ -191,7 +191,7 @@ h1 {
 }
 
 /* =========================
-   恐龍咬人畫面
+   恐龍咬人畫面（已調淡背景透明度，不完全遮擋卡牌）
 ========================= */
 
 .bite-screen {
@@ -205,7 +205,8 @@ h1 {
     justify-content: center;
     align-items: center;
 
-    background: rgba(220, 38, 38, 0.92);
+    background: rgba(220, 38, 38, 0.45); /* 調淡紅色透明度 */
+    backdrop-filter: blur(2px);          /* 增加微模糊效果 */
 
     overflow: hidden;
 }
@@ -473,6 +474,9 @@ let timer = null;
    取得元素
 ================================= */
 
+const gameContainer =
+    document.querySelector(".game");
+
 const board =
     document.getElementById("board");
 
@@ -584,21 +588,9 @@ function createCards() {
         size * size;
 
 
-    /*
-     * 奇數：
-     * 3×3 = 9
-     * 5×5 = 25
-     *
-     * 留一張恐龍蛋
-     */
-
     hasEgg =
         total % 2 === 1;
 
-
-    /*
-     * 正常配對數
-     */
 
     totalPairs =
         Math.floor(total / 2);
@@ -607,20 +599,12 @@ function createCards() {
     cards = [];
 
 
-    /*
-     * 取得恐龍
-     */
-
     const selected =
         dinosaurs.slice(
             0,
             totalPairs
         );
 
-
-    /*
-     * 每隻兩張
-     */
 
     selected.forEach(dino => {
 
@@ -630,20 +614,12 @@ function createCards() {
     });
 
 
-    /*
-     * 只有奇數模式才加蛋
-     */
-
     if (hasEgg) {
 
         cards.push("🥚");
 
     }
 
-
-    /*
-     * 洗牌
-     */
 
     shuffle(cards);
 }
@@ -729,18 +705,10 @@ function drawBoard() {
 
 function flipCard(card) {
 
-    /*
-     * 正在處理兩張牌
-     */
-
     if (locked) {
         return;
     }
 
-
-    /*
-     * 已經翻開
-     */
 
     if (
         card.classList.contains("flipped")
@@ -749,20 +717,12 @@ function flipCard(card) {
     }
 
 
-    /*
-     * 已經配對
-     */
-
     if (
         card.classList.contains("matched")
     ) {
         return;
     }
 
-
-    /*
-     * 恐龍蛋
-     */
 
     if (
         card.dataset.symbol === "🥚"
@@ -774,19 +734,11 @@ function flipCard(card) {
     }
 
 
-    /*
-     * 翻開
-     */
-
     card.classList.add("flipped");
 
     card.textContent =
         card.dataset.symbol;
 
-
-    /*
-     * 第一張
-     */
 
     if (firstCard === null) {
 
@@ -798,10 +750,6 @@ function flipCard(card) {
         return;
     }
 
-
-    /*
-     * 第二張
-     */
 
     secondCard = card;
 
@@ -822,12 +770,6 @@ function checkCards() {
     const b =
         secondCard.dataset.symbol;
 
-
-    /*
-     * ★ 最重要的判斷
-     *
-     * 完全相同才成功
-     */
 
     if (a === b) {
 
@@ -875,51 +817,49 @@ function correct() {
 
 
 /* =================================
-   配對錯誤
+   配對錯誤（優化：先給小朋友 0.6 秒看清楚牌，再彈特效）
 ================================= */
 
 function wrong() {
 
     locked = true;
 
-
     message.textContent =
         "😱 翻錯了！";
 
 
-    showBite();
-
-
+    // 先停頓 600 毫秒（0.6秒），讓小朋友看清圖案與位置
     setTimeout(() => {
 
-        firstCard.classList.remove(
-            "flipped"
-        );
+        showBite();
 
-        secondCard.classList.remove(
-            "flipped"
-        );
+        // 咬人特效顯示完畢後，再蓋牌
+        setTimeout(() => {
 
+            if (firstCard) {
+                firstCard.classList.remove("flipped");
+                firstCard.textContent = "❓";
+            }
 
-        firstCard.textContent =
-            "❓";
-
-        secondCard.textContent =
-            "❓";
-
-
-        firstCard = null;
-
-        secondCard = null;
-
-        locked = false;
+            if (secondCard) {
+                secondCard.classList.remove("flipped");
+                secondCard.textContent = "❓";
+            }
 
 
-        message.textContent =
-            "🦖 再試一次！";
+            firstCard = null;
+
+            secondCard = null;
+
+            locked = false;
 
 
-    }, 1000);
+            message.textContent =
+                "🦖 再試一次！";
+
+        }, 800);
+
+    }, 600);
 }
 
 
@@ -959,32 +899,15 @@ function findEgg(card) {
 
 
 /* =================================
-   恐龍咬人
+   恐龍咬人特效
 ================================= */
 
 function showBite() {
 
-    const game =
-        document.querySelector(".game");
-
-
-    /*
-     * 顯示
-     */
-
     biteScreen.classList.add("show");
 
+    gameContainer.classList.add("shake");
 
-    /*
-     * 震動
-     */
-
-    game.classList.add("shake");
-
-
-    /*
-     * 手機支援震動
-     */
 
     if (
         navigator.vibrate
@@ -1005,11 +928,11 @@ function showBite() {
             "show"
         );
 
-        game.classList.remove(
+        gameContainer.classList.remove(
             "shake"
         );
 
-    }, 900);
+    }, 800);
 }
 
 
@@ -1019,17 +942,9 @@ function showBite() {
 
 function checkWin() {
 
-    /*
-     * 所有配對完成
-     */
-
     const pairsDone =
         matchedPairs === totalPairs;
 
-
-    /*
-     * 如果有蛋，也要找到蛋
-     */
 
     const eggDone =
         !hasEgg || eggFound;
